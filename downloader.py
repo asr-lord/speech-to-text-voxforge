@@ -40,8 +40,7 @@ def ensure_directory(path: str):
 def download_corpus(target_directory: str,
                     max_workers: int,
                     amount: int,
-                    voxforge_url="http://www.repository.voxforge1.org/"
-                                 "downloads/SpeechCorpus/Trunk/Audio/Main/16kHz_16bit"):
+                    voxforge_url: str):
     """
     Initiates download of the voxforge speech corpus
     :param target_directory: target directory for the files
@@ -89,6 +88,8 @@ if __name__ == '__main__':
     parser.add_argument('directory', help='directory where to store the downloaded corpus')
     parser.add_argument('-n', '--number', type=int, help="amount of files to download")
     parser.add_argument('-w', '--workers', type=int, help="amount of parallel downloads")
+    parser.add_argument('-url', type=str, help="voxforge data url", required=False,
+        default="http://www.repository.voxforge1.org/downloads/SpeechCorpus/Trunk/Audio/Main/8kHz_16bit/")
     args = parser.parse_args()
 
-    download_corpus(args.directory, args.workers, args.number)
+    download_corpus(args.directory, args.workers, args.number, args.url)
