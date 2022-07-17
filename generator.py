@@ -4,30 +4,50 @@ import json
 import argparse
 import random
 import shutil
-
 from typing import List
+from multiprocessing import Pool, cpu_count
 
 import pandas as pd
 from tqdm import tqdm
 from pydub import AudioSegment
 
 
-def convert_folder(folder):
+def convert_sox_audiofile(orig_file, dest_file):
+    command = f"sox -v 0.99 -V1 {orig_file} -r 8000 -c 1 -b 16 {dest_file}"
+    out = os.system(command)
+
+def convert_folder(folder, extension='*.wav'):
     total_duration = 0
-    convert_folder = folder+'/16khz/'
-    os.mkdir(convert_folder)
-    ext_type = '*.wav' if 'wav' in folder else '*.flac'
-    for file in glob.glob(os.path.join(folder, ext_type)):
-        shutil.move(file, convert_folder)
-    for file in tqdm(sorted(glob.glob(convert_folder + ext_type))):
+    convertion_folder = folder+'/16khz/'
+    os.makedirs(convertion_folder, exist_ok = True)
+    # extension = '*.wav' if 'wav' in folder else '*.flac'
+    for file in glob.glob(os.path.join(folder, extension)):
+        shutil.move(file, convertion_folder)
+    for file in sorted(glob.glob(convertion_folder + extension)):
         filename = os.path.basename(file)
-        dest_file = os.path.join(folder, filename)
-        command = f"sox -v 0.99 -V1 {file} -r 8000 -c 1 -b 16 {dest_file}"
-        out = os.system(command)
-        duration = 0  # get_duration(dest_file)
+        # dest_file = os.path.join(folder, filename)
+        dest_file = os.path.splitext(os.path.join(folder, filename))[0] + '.wav'
+        convert_sox_audiofile(file, dest_file)
+        duration = get_duration(dest_file)
         total_duration = total_duration + duration
-    shutil.rmtree(convert_folder)
+    shutil.rmtree(convertion_folder)
     return total_duration
+
+def parallelize_convert_folder(folder, extension='*.wav'):
+    audios = []
+    convertio_folder = folder+'/16khz/'
+    os.makedirs(convertion_folder, exist_ok = True)
+    # extension = '*.wav' if 'wav' in folder else '*.flac'
+    for file in glob.glob(os.path.join(folder, extension)):
+        shutil.move(file, convertion_folder)
+    for file in sorted(glob.glob(convertion_folder + extension)):
+        filename = os.path.basename(file)
+        # dest_file = os.path.join(folder, filename)
+        dest_file = os.path.splitext(os.path.join(folder, filename))[0] + '.wav'
+        audios.append(tuple((file, dest_file)))
+    with Pool(cpu_count()-1) as p:
+      p.starmap(convert_sox_audiofile, audios)
+    shutil.rmtree(convertion_folder)
 
 
 def get_duration(file):
@@ -82,9 +102,9 @@ def generate_json_file(source: str, destination: str):
 
         folders = os.listdir(os.path.join(source, speaker_directory))
         if 'wav' in folders:
-            _ = convert_folder(os.path.join(source, speaker_directory, 'wav'))
+            _ = parallelize_convert_folder(os.path.join(source, speaker_directory, '*.wav'))
         else:
-            _ = convert_folder(os.path.join(source, speaker_directory, 'flac'))
+            _ = parallelize_convert_folder(os.path.join(source, speaker_directory, '*.flac'))
         for row in prompt_file:
             row = row.strip()
             if row != '' and len(row.split(' '))>2:
