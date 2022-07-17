@@ -4,6 +4,7 @@ import tarfile
 import urllib3
 
 from concurrent.futures import ThreadPoolExecutor, wait
+from multiprocessing import cpu_count
 
 from urllib.request import urlopen
 
@@ -50,7 +51,7 @@ def download_corpus(target_directory: str,
     """
     # input validation
     if not max_workers:
-        max_workers = 10
+        max_workers = cpu_count() - 1
     if not target_directory:
         target_directory = "voxforge-corpus"
 
