@@ -35,7 +35,7 @@ def convert_folder(folder, extension='*.wav'):
 
 def parallelize_convert_folder(folder, extension='*.wav'):
     audios = []
-    convertio_folder = folder+'/16khz/'
+    convertion_folder = folder+'/16khz/'
     os.makedirs(convertion_folder, exist_ok = True)
     # extension = '*.wav' if 'wav' in folder else '*.flac'
     for file in glob.glob(os.path.join(folder, extension)):
@@ -45,7 +45,8 @@ def parallelize_convert_folder(folder, extension='*.wav'):
         # dest_file = os.path.join(folder, filename)
         dest_file = os.path.splitext(os.path.join(folder, filename))[0] + '.wav'
         audios.append(tuple((file, dest_file)))
-    with Pool(cpu_count()-1) as p:
+    n_cores = max(cpu_count()-1, 1)
+    with Pool(n_cores) as p:
       p.starmap(convert_sox_audiofile, audios)
     shutil.rmtree(convertion_folder)
 
