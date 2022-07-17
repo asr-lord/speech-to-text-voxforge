@@ -103,9 +103,9 @@ def generate_json_file(source: str, destination: str):
 
         folders = os.listdir(os.path.join(source, speaker_directory))
         if 'wav' in folders:
-            _ = parallelize_convert_folder(os.path.join(source, speaker_directory, '*.wav'))
+            _ = parallelize_convert_folder(os.path.join(source, speaker_directory), '*.wav')
         else:
-            _ = parallelize_convert_folder(os.path.join(source, speaker_directory, '*.flac'))
+            _ = parallelize_convert_folder(os.path.join(source, speaker_directory), '*.flac')
         for row in prompt_file:
             row = row.strip()
             if row != '' and len(row.split(' '))>2:
