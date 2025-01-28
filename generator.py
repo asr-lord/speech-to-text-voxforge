@@ -8,6 +8,7 @@ from typing import List
 from multiprocessing import Pool, cpu_count
 
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 from pydub import AudioSegment
 
