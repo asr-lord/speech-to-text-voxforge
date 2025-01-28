@@ -12,6 +12,18 @@ from tqdm import tqdm
 from pydub import AudioSegment
 
 
+def create_side(original_df):
+    df = original_df.copy()
+    # Obtener valores únicos de 'speaker-id'
+    unique_speaker_ids = df['speaker-id'].unique()
+    # Mapear 'client' u 'operator' de manera consistente
+    mapping = dict(zip(unique_speaker_ids, np.random.choice(['client', 'operator'], size=len(unique_speaker_ids), replace=True)))
+    # Crear la nueva columna 'side' utilizando el mapeo
+    if "side" in df.columns:
+        df.drop('side', axis=1, inplace=True)
+    df.loc[:, 'side'] = df['speaker-id'].map(mapping)  # df['side'] = df['speaker-id'].map(mapping)
+    return df
+
 def convert_sox_audiofile(orig_file, dest_file):
     command = f"sox -v 0.99 -V1 {orig_file} -r 8000 -c 1 -b 16 {dest_file}"
     out = os.system(command)
@@ -138,7 +150,7 @@ def generate_json_file(source: str, destination: str):
 
                     data.append({
                         'audio_id': speaker_directory,
-                        'side': random.choice(['client', 'operator']),
+                        # 'side': random.choice(['client', 'operator']),
                         'fragment_id': fragment_id,
                         'duration': duration,
                         'transcript': transcription,
@@ -155,6 +167,8 @@ def generate_json_file(source: str, destination: str):
         json.dump(data, outfile)
     print(f"Total duration: {total_duration/3.6e6}")
     df = pd.DataFrame(data)
+    df = create_side(df)
+    df = df[['audio_id', 'side', 'duration', 'speaker-id', 'transcript', 'wav_filename', 's3_location']]
     df.to_csv('/content/voxforge.csv', index=False)
 
 if __name__ == '__main__':
